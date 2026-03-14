@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chess Target</title>
+    <link rel="icon" type="image/png" href="img/chesstarget logo.png" />
+    <link rel="stylesheet" href="chessboardjs/css/chessboard-1.0.0.min.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #0f0f0f;
+        color: #e8e8e8;
+        font-family: system-ui, -apple-system, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── Screens ── */
+      .screen {
+        display: none;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+      }
+      .screen.active {
+        display: flex;
+      }
+
+      /* ── Input Screen ── */
+      .input-box {
+        width: 440px;
+        text-align: center;
+        background: #181818;
+        border: 1px solid #222;
+        border-radius: 14px;
+        padding: 3rem 2.4rem 2.4rem;
+      }
+      .input-box img {
+        height: 80px;
+        margin-bottom: 18px;
+        border-radius: 8px;
+      }
+      .input-box h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 6px;
+      }
+      .input-box .sub {
+        color: #777;
+        font-size: 1rem;
+        margin-bottom: 32px;
+        line-height: 1.6;
+      }
+      .platform-toggle {
+        display: flex;
+        gap: 0;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #222;
+      }
+      .platform-toggle button {
+        flex: 1;
+        padding: 13px 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        background: #111;
+        color: #666;
+        transition:
+          background 0.15s,
+          color 0.15s;
+        font-family: inherit;
+      }
+      .platform-toggle button.active {
+        background: #e8e8e8;
+        color: #0f0f0f;
+      }
+      .input-field {
+        width: 100%;
+        padding: 14px 18px;
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 10px;
+        color: #e8e8e8;
+        font-size: 1rem;
+        font-family: inherit;
+        outline: none;
+        margin-bottom: 20px;
+      }
+      .input-field:focus {
+        border-color: #444;
+      }
+      .input-field::placeholder {
+        color: #444;
+      }
+      .slider-wrap {
+        margin-bottom: 28px;
+        text-align: left;
+      }
+      .slider-wrap label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: #888;
+        margin-bottom: 12px;
+      }
+      .slider-wrap label span {
+        color: #e8e8e8;
+        font-weight: 700;
+      }
+      .slider-wrap input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: #222;
+        outline: none;
+      }
+      .slider-wrap input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #e8e8e8;
+        cursor: pointer;
+      }
+      .slider-wrap input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #e8e8e8;
+        cursor: pointer;
+        border: none;
+      }
+      .go-btn {
+        width: 100%;
+        padding: 15px;
+        border-radius: 10px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        background: #e8e8e8;
+        color: #0f0f0f;
+        font-family: inherit;
+        transition: opacity 0.15s;
+      }
+      .go-btn:hover {
+        opacity: 0.85;
+      }
+      .go-btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .error-msg {
+        color: #e85d5d;
+        font-size: 0.9rem;
+        margin-top: 16px;
+        min-height: 20px;
+      }
+
+      /* ── Loading Screen ── */
+      .loading-box {
+        width: 460px;
+        text-align: center;
+        background: #181818;
+        border: 1px solid #222;
+        border-radius: 14px;
+        padding: 3rem 2.4rem;
+      }
+      .loading-box h2 {
+        font-size: 1.4rem;
+        margin-bottom: 22px;
+        font-weight: 700;
+        color: #ccc;
+      }
+      .prog-outer {
+        width: 100%;
+        height: 8px;
+        background: #111;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 16px;
+        border: 1px solid #222;
+      }
+      .prog-inner {
+        height: 100%;
+        width: 0%;
+        background: #e8e8e8;
+        border-radius: 4px;
+        transition: width 0.25s ease;
+      }
+      .loading-detail {
+        font-size: 0.85rem;
+        color: #666;
+        font-family: "SF Mono", "Fira Code", monospace;
+      }
+
+      /* ── Puzzle Screen ── */
+      .puzzle-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        padding: 24px;
+        gap: 0;
+      }
+      .puzzle-header {
+        margin-bottom: 10px;
+      }
+      .puzzle-counter {
+        font-size: 1.1rem;
+        color: #e8e8e8;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .puzzle-game-info {
+        font-size: 0.9rem;
+        color: #666;
+      }
+      .puzzle-layout {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 24px;
+      }
+
+      /* Eval bar */
+      .eval-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding-top: 58px;
+      }
+      .eval-score {
+        font-size: 12px;
+        font-weight: 700;
+        font-family: "SF Mono", "Fira Code", monospace;
+        color: #bbb;
+        min-height: 16px;
+      }
+      .eval-bar {
+        width: 28px;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid #2a2a2a;
+        position: relative;
+      }
+      .eval-black {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #161616;
+        transition: height 0.35s ease;
+      }
+      .eval-white {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        transition: height 0.35s ease;
+      }
+
+      /* Board */
+      .board-col {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .player-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 24px;
+      }
+      .player-pip {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .pip-white {
+        background: #ffffff;
+        border: 1px solid #555;
+      }
+      .pip-black {
+        background: #1c1c1c;
+        border: 1px solid #555;
+      }
+      .player-name {
+        font-size: 0.9rem;
+        color: #aaa;
+      }
+
+      /* Puzzle panel */
+      .puzzle-panel {
+        width: 280px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-top: 80px;
+      }
+      .card {
+        background: #181818;
+        border: 1px solid #222;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .card-header {
+        padding: 8px 14px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #555;
+        border-bottom: 1px solid #222;
+        background: #141414;
+      }
+      .card-body {
+        padding: 16px;
+        font-size: 0.95rem;
+        line-height: 1.7;
+        color: #aaa;
+      }
+      .prompt-text {
+        color: #e8e8e8;
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+
+      /* Info phase styling */
+      .info-blunder-label {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: 1rem;
+        color: #e85d5d;
+        font-weight: 600;
+      }
+      .info-blunder-label strong {
+        color: #fff;
+      }
+      .info-eval {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 6px;
+        font-family: "SF Mono", "Fira Code", monospace;
+      }
+      .info-hint {
+        color: #888;
+        font-size: 0.9rem;
+        margin-top: 12px;
+      }
+
+      .result-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+      }
+      .result-row img {
+        width: 28px;
+        height: 28px;
+      }
+      .result-correct {
+        color: #4caf50;
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+      .result-wrong {
+        color: #e85d5d;
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+      .result-good-alt {
+        color: #8bc34a;
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+      .result-detail {
+        font-size: 0.9rem;
+        color: #999;
+        margin-top: 6px;
+      }
+      .original-move {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+      }
+      .btn-row-puzzle {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .pbtn {
+        flex: 1;
+        padding: 11px 0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid #222;
+        background: #181818;
+        color: #aaa;
+        font-family: inherit;
+        transition: opacity 0.15s;
+      }
+      .pbtn:hover {
+        opacity: 0.85;
+      }
+      .pbtn-primary {
+        background: #e8e8e8;
+        color: #0f0f0f;
+        border-color: #e8e8e8;
+      }
+      .pbtn-primary:hover {
+        opacity: 0.85;
+      }
+
+      /* Progress bar in puzzle panel */
+      .progress-bar-wrap {
+        width: 100%;
+        height: 6px;
+        background: #222;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        background: #e8e8e8;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+      }
+      .progress-label {
+        font-size: 0.85rem;
+        color: #666;
+      }
+
+      /* No-puzzles / done message */
+      .msg-box {
+        text-align: center;
+        background: #181818;
+        border: 1px solid #222;
+        border-radius: 14px;
+        padding: 3rem 2.5rem;
+      }
+      .msg-box h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .msg-box p {
+        color: #777;
+        font-size: 1rem;
+        margin-bottom: 28px;
+        line-height: 1.6;
+      }
+
+      /* Classification badge on board */
+      .move-badge {
+        position: absolute;
+        width: 26px;
+        height: 26px;
+        top: -6px;
+        right: -6px;
+        z-index: 100;
+        pointer-events: none;
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+      }
+
+      /* Highlight squares */
+      .highlight-from {
+        box-shadow: inset 0 0 0 3px rgba(255, 210, 0, 0.5) !important;
+      }
+      .highlight-to {
+        box-shadow: inset 0 0 0 3px rgba(255, 210, 0, 0.7) !important;
+      }
+
+      /* ── Responsive board sizing ── */
+      /* Default: board fills available height minus header/padding */
+      #board {
+        width: min(60vh, 560px);
+      }
+      .eval-bar {
+        height: min(60vh, 560px);
+      }
+
+      @media (min-height: 900px) {
+        #board {
+          width: min(66vh, 620px);
+        }
+        .eval-bar {
+          height: min(66vh, 620px);
+        }
+      }
+
+      /* ── Tablet ── */
+      @media (max-width: 960px) {
+        .puzzle-layout {
+          flex-direction: column;
+          align-items: center;
+        }
+        .puzzle-panel {
+          width: 100%;
+          max-width: 560px;
+          padding-top: 0;
+        }
+        .eval-col {
+          flex-direction: row;
+          padding-top: 0;
+          gap: 10px;
+        }
+        .eval-bar {
+          height: 22px;
+          width: min(60vh, 560px);
+        }
+        .eval-black {
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: auto;
+          height: 100% !important;
+          transition: width 0.35s ease;
+        }
+        .eval-white {
+          top: 0;
+          bottom: 0;
+          right: 0;
+          left: auto;
+          height: 100% !important;
+          transition: width 0.35s ease;
+        }
+      }
+
+      /* ── Mobile ── */
+      @media (max-width: 580px) {
+        #board {
+          width: 92vw !important;
+        }
+        .eval-bar {
+          width: 92vw !important;
+        }
+        .input-box {
+          width: 92vw;
+          padding: 2rem 1.4rem 1.8rem;
+        }
+        .loading-box {
+          width: 92vw;
+        }
+        .puzzle-wrap {
+          padding: 12px;
+        }
+        .puzzle-panel {
+          max-width: 92vw;
+          width: 92vw;
+        }
+        .puzzle-counter {
+          font-size: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ─── Input Screen ─── -->
+    <div id="inputScreen" class="screen active">
+      <div class="input-box">
+        <img src="img/chesstarget logo.png" alt="Chess Target" />
+        <h1>Chess Target</h1>
+        <p class="sub">Find exactly where you went wrong</p>
+        <div class="platform-toggle">
+          <button
+            id="btnLichess"
+            class="active"
+            onclick="setPlatform('lichess')"
+          >
+            Lichess
+          </button>
+          <button id="btnChesscom" onclick="setPlatform('chesscom')">
+            Chess.com
+          </button>
+        </div>
+        <input
+          class="input-field"
+          id="usernameInput"
+          placeholder="Enter your username"
+          autocomplete="off"
+        />
+        <div class="slider-wrap">
+          <label>Games to analyze <span id="gameCountLabel">10</span></label>
+          <input
+            type="range"
+            id="gameCountSlider"
+            min="1"
+            max="50"
+            value="10"
+          />
+        </div>
+        <button class="go-btn" id="goBtn" onclick="startAnalysis()">
+          Analyze
+        </button>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+    </div>
+
+    <!-- ─── Loading Screen ─── -->
+    <div id="loadingScreen" class="screen">
+      <div class="loading-box">
+        <h2 id="loadingTitle">Fetching games...</h2>
+        <div class="prog-outer">
+          <div class="prog-inner" id="progressBar"></div>
+        </div>
+        <div class="loading-detail" id="loadingDetail"></div>
+      </div>
+    </div>
+
+    <!-- ─── Puzzle Screen ─── -->
+    <div id="puzzleScreen" class="screen">
+      <div class="puzzle-wrap">
+        <div class="puzzle-layout">
+          <div class="eval-col">
+            <div class="eval-score" id="evalScore">0.0</div>
+            <div class="eval-bar">
+              <div class="eval-black" id="evalBlack" style="height: 50%"></div>
+              <div class="eval-white" id="evalWhite" style="height: 50%"></div>
+            </div>
+          </div>
+          <div class="board-col">
+            <div class="puzzle-header">
+              <div class="puzzle-counter" id="puzzleCounter"></div>
+              <div class="puzzle-game-info" id="puzzleGameInfo"></div>
+            </div>
+            <div class="player-row">
+              <div class="player-pip pip-black" id="topPip"></div>
+              <span class="player-name" id="topLabel">Black</span>
+            </div>
+            <div id="board"></div>
+            <div class="player-row">
+              <div class="player-pip pip-white" id="bottomPip"></div>
+              <span class="player-name" id="bottomLabel">White</span>
+            </div>
+          </div>
+          <div class="puzzle-panel">
+            <div class="card">
+              <div class="card-header">Puzzle</div>
+              <div class="card-body" id="puzzleBody">
+                <div class="prompt-text" id="promptText">
+                  Find the best move!
+                </div>
+                <div id="resultArea" style="display: none"></div>
+                <div class="btn-row-puzzle" id="puzzleBtns">
+                  <button class="pbtn" onclick="skipPuzzle()">Skip</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">Progress</div>
+              <div class="card-body" id="puzzleProgress"></div>
+            </div>
+            <button
+              class="pbtn"
+              style="width: 100%; margin-top: 4px"
+              onclick="location.reload()"
+            >
+              New Analysis
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Message Screen (no puzzles / done) ─── -->
+    <div id="msgScreen" class="screen">
+      <div class="msg-box">
+        <h2 id="msgTitle"></h2>
+        <p id="msgText"></p>
+        <button
+          class="go-btn"
+          style="width: auto; padding: 12px 32px"
+          onclick="location.reload()"
+        >
+          New Analysis
+        </button>
+      </div>
+    </div>
+
+    <script src="js/jquery-3.7.1.min.js"></script>
+    <script src="chessjs/chess.min.js"></script>
+    <script src="chessboardjs/js/chessboard-1.0.0.min.js"></script>
+    <script src="js/script.js"></script>
+  </body>
+</html>
